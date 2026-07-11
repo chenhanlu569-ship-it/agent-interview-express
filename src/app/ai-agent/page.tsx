@@ -1,0 +1,147 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Brain, ChevronDown, ChevronUp, CheckCircle2, Circle, ExternalLink } from 'lucide-react';
+
+interface AIQuestion {
+  id: number;
+  category: string;
+  question: string;
+  answer: string;
+  tags: string;
+  is_favorited: number;
+  created_at: string;
+}
+
+const categoryColors: Record<string, string> = {
+  'LLM基础': 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  'Prompt工程': 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20',
+  'RAG': 'bg-green-500/10 text-green-600 border-green-500/20',
+  'Agent框架': 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+  '工具调用': 'bg-orange-500/10 text-orange-600 border-orange-500/20',
+  '记忆与上下文': 'bg-pink-500/10 text-pink-600 border-pink-500/20',
+  '评估与优化': 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  '部署与工程': 'bg-red-500/10 text-red-600 border-red-500/20',
+};
+
+export default function AIAgentPage() {
+  const [questions, setQuestions] = useState<AIQuestion[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [category, setCategory] = useState('all');
+  const [search, setSearch] = useState('');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const pageSize = 10;
+
+  const load = useCallback(async () => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (category !== 'all') params.set('category', category);
+    if (search) params.set('search', search);
+    const res = await fetch(`/api/ai?${params}`);
+    const data = await res.json();
+    setQuestions(data.data || []);
+    setTotal(data.total || 0);
+  }, [page, category, search]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    async function loadCats() {
+      const res = await fetch('/api/ai?pageSize=1');
+      const data = await res.json();
+      if (data.categories) setCategories(data.categories.map((c: { category: string }) => c.category));
+    }
+    loadCats();
+  }, []);
+
+  const toggleFavorite = async (id: number) => {
+    await fetch('/api/ai', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggleFavorite', id }),
+    });
+    setQuestions(prev => prev.map(q => q.id === id ? { ...q, is_favorited: 1 - q.is_favorited } : q));
+  };
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  return (
+    <div className="p-6 lg:p-8">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Brain className="h-6 w-6 text-purple-500" />
+          <h1 className="text-2xl font-bold">AI Agent 面试题</h1>
+          <Badge variant="secondary">{total} 题</Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">涵盖LLM、Prompt工程、RAG、Agent框架、工具调用等前沿话题</p>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="搜索题目..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
+        </div>
+        <Select value={category} onValueChange={(v) => { setCategory(v); setPage(1); }}>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder="分类" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部分类</SelectItem>
+            {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Questions */}
+      <div className="space-y-3">
+        {questions.map((q) => (
+          <Card key={q.id} className={`transition-all ${q.is_favorited ? 'border-green-500/30 bg-green-500/5' : ''}`}>
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className={`text-[10px] ${categoryColors[q.category] || 'bg-gray-500/10 text-gray-600'}`}>
+                      {q.category}
+                    </Badge>
+                    {q.tags && <span className="text-xs text-muted-foreground">{q.tags}</span>}
+                  </div>
+                  <CardTitle className="text-base cursor-pointer hover:text-primary" onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}>
+                    {q.question}
+                  </CardTitle>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleFavorite(q.id)}>
+                    {q.is_favorited ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}>
+                    {expandedId === q.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            {expandedId === q.id && (
+              <CardContent className="pt-0">
+                <div className="rounded-lg bg-accent/50 p-4">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{q.answer}</p>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>上一页</Button>
+          <span className="text-sm text-muted-foreground">{page} / {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>下一页</Button>
+        </div>
+      )}
+    </div>
+  );
+}
