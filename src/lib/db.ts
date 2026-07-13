@@ -43,6 +43,7 @@ function initTables(db: Database.Database) {
       description TEXT NOT NULL DEFAULT '',
       leetcode_url TEXT NOT NULL DEFAULT '',
       solution_hint TEXT NOT NULL DEFAULT '',
+      heat_rating INTEGER NOT NULL DEFAULT 3 CHECK(heat_rating BETWEEN 1 AND 5),
       is_favorited INTEGER NOT NULL DEFAULT 0,
       is_solved INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -90,8 +91,11 @@ function initTables(db: Database.Database) {
     -- 索引
     CREATE INDEX IF NOT EXISTS idx_leetcode_category ON leetcode_problems(category);
     CREATE INDEX IF NOT EXISTS idx_leetcode_difficulty ON leetcode_problems(difficulty);
+    CREATE INDEX IF NOT EXISTS idx_leetcode_heat ON leetcode_problems(heat_rating);
     CREATE INDEX IF NOT EXISTS idx_java_category ON java_questions(category);
+    CREATE INDEX IF NOT EXISTS idx_java_importance ON java_questions(importance);
     CREATE INDEX IF NOT EXISTS idx_ai_category ON ai_questions(category);
+    CREATE INDEX IF NOT EXISTS idx_ai_importance ON ai_questions(importance);
     CREATE INDEX IF NOT EXISTS idx_knowledge_source ON knowledge_entries(source_type);
     CREATE INDEX IF NOT EXISTS idx_knowledge_category ON knowledge_entries(category);
   `);
@@ -131,6 +135,7 @@ export const leetcodeRepo = {
   list(params: {
     category?: string;
     difficulty?: string;
+    heat_rating?: number;
     search?: string;
     is_favorited?: number;
     is_solved?: number;
@@ -147,6 +152,10 @@ export const leetcodeRepo = {
     if (params.difficulty && params.difficulty !== 'all') {
       conditions.push('difficulty = @difficulty');
       values.difficulty = params.difficulty;
+    }
+    if (params.heat_rating && params.heat_rating !== 0) {
+      conditions.push('heat_rating = @heat_rating');
+      values.heat_rating = params.heat_rating;
     }
     if (params.search) {
       conditions.push('(title LIKE @search OR title_cn LIKE @search OR tags LIKE @search)');
@@ -196,14 +205,19 @@ export const leetcodeRepo = {
     const easy = (db.prepare("SELECT COUNT(*) as c FROM leetcode_problems WHERE difficulty = 'Easy'").get() as { c: number }).c;
     const medium = (db.prepare("SELECT COUNT(*) as c FROM leetcode_problems WHERE difficulty = 'Medium'").get() as { c: number }).c;
     const hard = (db.prepare("SELECT COUNT(*) as c FROM leetcode_problems WHERE difficulty = 'Hard'").get() as { c: number }).c;
-    return { total, solved, favorited, easy, medium, hard };
+    const heat5 = (db.prepare('SELECT COUNT(*) as c FROM leetcode_problems WHERE heat_rating = 5').get() as { c: number }).c;
+    const heat4 = (db.prepare('SELECT COUNT(*) as c FROM leetcode_problems WHERE heat_rating = 4').get() as { c: number }).c;
+    const heat3 = (db.prepare('SELECT COUNT(*) as c FROM leetcode_problems WHERE heat_rating = 3').get() as { c: number }).c;
+    const heat2 = (db.prepare('SELECT COUNT(*) as c FROM leetcode_problems WHERE heat_rating = 2').get() as { c: number }).c;
+    const heat1 = (db.prepare('SELECT COUNT(*) as c FROM leetcode_problems WHERE heat_rating = 1').get() as { c: number }).c;
+    return { total, solved, favorited, easy, medium, hard, heat5, heat4, heat3, heat2, heat1 };
   },
 
   insert(data: Omit<import('./types').LeetCodeProblem, 'id' | 'created_at' | 'is_favorited' | 'is_solved'>) {
     const db = getDb();
     db.prepare(`
-      INSERT INTO leetcode_problems (id, title, title_cn, difficulty, category, tags, description, leetcode_url, solution_hint)
-      VALUES (@id, @title, @title_cn, @difficulty, @category, @tags, @description, @leetcode_url, @solution_hint)
+      INSERT INTO leetcode_problems (id, title, title_cn, difficulty, category, tags, description, leetcode_url, solution_hint, heat_rating)
+      VALUES (@id, @title, @title_cn, @difficulty, @category, @tags, @description, @leetcode_url, @solution_hint, @heat_rating)
     `).run(data);
   },
 };
@@ -214,6 +228,7 @@ export const leetcodeRepo = {
 export const javaRepo = {
   list(params: {
     category?: string;
+    importance?: number;
     search?: string;
     is_favorited?: number;
     page?: number;
@@ -225,6 +240,10 @@ export const javaRepo = {
     if (params.category && params.category !== 'all') {
       conditions.push('category = @category');
       values.category = params.category;
+    }
+    if (params.importance && params.importance !== 0) {
+      conditions.push('importance = @importance');
+      values.importance = params.importance;
     }
     if (params.search) {
       conditions.push('(question LIKE @search OR answer LIKE @search OR tags LIKE @search)');
@@ -299,6 +318,7 @@ export const javaRepo = {
 export const aiRepo = {
   list(params: {
     category?: string;
+    importance?: number;
     search?: string;
     is_favorited?: number;
     page?: number;
@@ -310,6 +330,10 @@ export const aiRepo = {
     if (params.category && params.category !== 'all') {
       conditions.push('category = @category');
       values.category = params.category;
+    }
+    if (params.importance && params.importance !== 0) {
+      conditions.push('importance = @importance');
+      values.importance = params.importance;
     }
     if (params.search) {
       conditions.push('(question LIKE @search OR answer LIKE @search OR tags LIKE @search)');

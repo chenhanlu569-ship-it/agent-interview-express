@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   const result = leetcodeRepo.list({
     category: sp.get('category') || undefined,
     difficulty: sp.get('difficulty') || undefined,
+    heat_rating: sp.get('heat_rating') ? Number(sp.get('heat_rating')) : undefined,
     search: sp.get('search') || undefined,
     is_favorited: sp.get('is_favorited') ? Number(sp.get('is_favorited')) : undefined,
     is_solved: sp.get('is_solved') ? Number(sp.get('is_solved')) : undefined,

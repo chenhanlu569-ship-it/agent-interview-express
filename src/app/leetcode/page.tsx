@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Heart, CheckCircle2, ExternalLink, Code2 } from 'lucide-react';
+import { Search, Heart, CheckCircle2, ExternalLink, Code2, Star, Flame } from 'lucide-react';
 
 interface Problem {
   id: number;
@@ -18,6 +18,7 @@ interface Problem {
   description: string;
   leetcode_url: string;
   solution_hint: string;
+  heat_rating: number;
   is_favorited: number;
   is_solved: number;
 }
@@ -28,6 +29,26 @@ const difficultyColor: Record<string, string> = {
   Hard: 'bg-red-500/10 text-red-600 border-red-500/20',
 };
 
+const heatLabels: Record<number, { label: string; color: string; bg: string }> = {
+  5: { label: '必刷', color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/20' },
+  4: { label: '重点', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/20' },
+  3: { label: '常考', color: 'text-yellow-500', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+  2: { label: '了解', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20' },
+  1: { label: '选做', color: 'text-slate-500', bg: 'bg-slate-500/10 border-slate-500/20' },
+};
+
+function HeatStars({ rating }: { rating: number }) {
+  const heat = heatLabels[rating] || heatLabels[3];
+  return (
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border ${heat.bg} ${heat.color}`}>
+      <Flame className="h-3 w-3" />
+      <Star className="h-2.5 w-2.5 fill-current" />
+      {rating}
+      <span className="ml-0.5 opacity-80">{heat.label}</span>
+    </span>
+  );
+}
+
 export default function LeetCodePage() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -35,6 +56,7 @@ export default function LeetCodePage() {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
+  const [heatRating, setHeatRating] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const pageSize = 15;
@@ -43,13 +65,14 @@ export default function LeetCodePage() {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (category !== 'all') params.set('category', category);
     if (difficulty !== 'all') params.set('difficulty', difficulty);
+    if (heatRating !== 'all') params.set('heat_rating', heatRating);
     if (search) params.set('search', search);
 
     const res = await fetch(`/api/leetcode?${params}`);
     const data = await res.json();
     setProblems(data.data || []);
     setTotal(data.total || 0);
-  }, [page, category, difficulty, search]);
+  }, [page, category, difficulty, heatRating, search]);
 
   useEffect(() => {
     loadProblems();
@@ -128,6 +151,19 @@ export default function LeetCodePage() {
             <SelectItem value="Hard">Hard</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={heatRating} onValueChange={(v) => { setHeatRating(v); setPage(1); }}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="热度" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部热度</SelectItem>
+            <SelectItem value="5">5星 必刷</SelectItem>
+            <SelectItem value="4">4星 重点</SelectItem>
+            <SelectItem value="3">3星 常考</SelectItem>
+            <SelectItem value="2">2星 了解</SelectItem>
+            <SelectItem value="1">1星 选做</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Problem List */}
@@ -147,7 +183,8 @@ export default function LeetCodePage() {
                       <span className="ml-2 text-xs text-muted-foreground">{p.title}</span>
                     </button>
                   </div>
-                  <div className="mt-1 flex items-center gap-2">
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    <HeatStars rating={p.heat_rating} />
                     <Badge className={`text-[10px] ${difficultyColor[p.difficulty]}`}>{p.difficulty}</Badge>
                     <span className="text-xs text-muted-foreground">{p.category}</span>
                     {p.tags && <span className="text-xs text-muted-foreground">· {p.tags}</span>}

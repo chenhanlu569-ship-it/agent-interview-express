@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const result = aiRepo.list({
     category: sp.get('category') || undefined,
+    importance: sp.get('importance') ? Number(sp.get('importance')) : undefined,
     search: sp.get('search') || undefined,
     is_favorited: sp.get('is_favorited') ? Number(sp.get('is_favorited')) : undefined,
     page: Number(sp.get('page') || 1),

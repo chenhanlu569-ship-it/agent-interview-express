@@ -165,38 +165,37 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Quick Tips */}
+      {/* Heat Rating Legend */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingUp className="h-4 w-4" />
-            备考建议
+            面试热度评级说明
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm font-medium">每日刷题</span>
+          <div className="grid grid-cols-5 gap-3">
+            {[
+              { stars: 5, label: '必刷', desc: '面试极高频，几乎必问', color: 'text-red-500' },
+              { stars: 4, label: '重点', desc: '高频考点，频繁出现', color: 'text-orange-500' },
+              { stars: 3, label: '常考', desc: '中等频率，经常考察', color: 'text-yellow-500' },
+              { stars: 2, label: '了解', desc: '偶有涉及，掌握即可', color: 'text-blue-500' },
+              { stars: 1, label: '选学', desc: '低频考点，拓展知识', color: 'text-gray-500' },
+            ].map((item) => (
+              <div key={item.stars} className="space-y-1">
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: item.stars }).map((_, i) => (
+                    <Star key={i} className={`h-3.5 w-3.5 fill-current ${item.color}`} />
+                  ))}
+                  <span className={`text-sm font-medium ${item.color}`}>{item.label}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{item.desc}</p>
               </div>
-              <p className="text-xs text-muted-foreground">建议每天完成2-3道LeetCode题目，保持手感</p>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm font-medium">八股文复习</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Java基础+并发+JVM+Spring是面试必考内容</p>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm font-medium">关注前沿</span>
-              </div>
-              <p className="text-xs text-muted-foreground">AI Agent是热门方向，掌握RAG/LLM/Agent框架</p>
-            </div>
+            ))}
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            热度评级综合来源于小红书、微信公众号、B站、LeetCode等平台的面试面经数据分析
+          </p>
         </CardContent>
       </Card>
     </div>

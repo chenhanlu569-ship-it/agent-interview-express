@@ -13,6 +13,7 @@ export interface LeetCodeProblem {
   description: string;
   leetcode_url: string;
   solution_hint: string;
+  heat_rating: number;  // 1-5 热度星级 (5=必刷, 1=选做)
   is_favorited: number; // 0 or 1
   is_solved: number;    // 0 or 1
   created_at: string;
