@@ -14,16 +14,22 @@ interface Stats {
 }
 
 interface DailyQuestion {
+  type: 'leetcode' | 'java' | 'ai';
+  // LeetCode fields
   id: number;
-  title: string;
-  title_cn: string;
-  difficulty: string;
+  title?: string;
+  title_cn?: string;
+  difficulty?: string;
   category: string;
-  tags: string;
-  description: string;
-  leetcode_url: string;
-  solution_hint: string;
-  heat_rating: number;
+  tags?: string;
+  description?: string;
+  leetcode_url?: string;
+  solution_hint?: string;
+  heat_rating?: number;
+  // Java/AI fields
+  question?: string;
+  answer?: string;
+  importance?: number;
 }
 
 export default function HomePage() {
@@ -176,19 +182,24 @@ export default function HomePage() {
               <CardTitle className="flex items-center gap-2 text-base">
                 <Dice5 className="h-5 w-5 text-primary" />
                 每日一题
+                <Badge variant="outline" className="text-xs">
+                  {dailyQ.type === 'leetcode' ? 'LeetCode' : dailyQ.type === 'java' ? 'Java' : 'AI Agent'}
+                </Badge>
                 <span className="text-xs font-normal text-muted-foreground">
                   {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}
                 </span>
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge variant={dailyQ.difficulty === 'Hard' ? 'destructive' : 'default'}>
-                  {dailyQ.difficulty === 'Hard' ? '困难' : '中等'}
-                </Badge>
+                {dailyQ.difficulty && (
+                  <Badge variant={dailyQ.difficulty === 'Hard' ? 'destructive' : 'default'}>
+                    {dailyQ.difficulty === 'Hard' ? '困难' : '中等'}
+                  </Badge>
+                )}
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-3.5 w-3.5 ${i < dailyQ.heat_rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
+                      className={`h-3.5 w-3.5 ${i < (dailyQ.heat_rating || dailyQ.importance || 3) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
                     />
                   ))}
                 </div>
@@ -196,41 +207,70 @@ export default function HomePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <h3 className="text-xl font-semibold mb-1">
-              {dailyQ.title_cn}
-              <span className="text-sm font-normal text-muted-foreground ml-2">{dailyQ.title}</span>
-            </h3>
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline">{dailyQ.category}</Badge>
-              {dailyQ.tags?.split(',').map((tag: string) => (
-                <Badge key={tag} variant="secondary" className="text-xs">{tag.trim()}</Badge>
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">{dailyQ.description}</p>
-            <div className="flex items-center gap-3">
-              <a
-                href={dailyQ.leetcode_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                开始做题
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-              <button
-                onClick={() => setShowHint(!showHint)}
-                className="inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-              >
-                <Lightbulb className="h-3.5 w-3.5" />
-                {showHint ? '隐藏提示' : '查看提示'}
-              </button>
-            </div>
-            {showHint && (
-              <div className="mt-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <span className="font-medium">思路提示：</span>{dailyQ.solution_hint}
-                </p>
-              </div>
+            {dailyQ.type === 'leetcode' ? (
+              <>
+                <h3 className="text-xl font-semibold mb-1">
+                  {dailyQ.title_cn}
+                  <span className="text-sm font-normal text-muted-foreground ml-2">{dailyQ.title}</span>
+                </h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline">{dailyQ.category}</Badge>
+                  {dailyQ.tags?.split(',').map((tag: string) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">{tag.trim()}</Badge>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">{dailyQ.description}</p>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={dailyQ.leetcode_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    开始做题
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                  <button
+                    onClick={() => setShowHint(!showHint)}
+                    className="inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                  >
+                    <Lightbulb className="h-3.5 w-3.5" />
+                    {showHint ? '隐藏提示' : '查看提示'}
+                  </button>
+                </div>
+                {showHint && (
+                  <div className="mt-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <span className="font-medium">思路提示：</span>{dailyQ.solution_hint}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold mb-2">{dailyQ.question}</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline">{dailyQ.category}</Badge>
+                  {dailyQ.tags?.split(',').map((tag: string) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">{tag.trim()}</Badge>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    onClick={() => setShowHint(!showHint)}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    {showHint ? '收起答案' : '查看答案'}
+                  </button>
+                </div>
+                {showHint && (
+                  <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4">
+                    <p className="text-sm text-emerald-800 dark:text-emerald-200 whitespace-pre-wrap leading-relaxed">
+                      {dailyQ.answer}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
