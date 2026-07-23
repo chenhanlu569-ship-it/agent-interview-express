@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Code2, Coffee, Brain, Library, TrendingUp, Target, BookOpen, Star } from 'lucide-react';
+import { Code2, Coffee, Brain, Library, TrendingUp, Target, BookOpen, Star, Dice5, ExternalLink, Lightbulb } from 'lucide-react';
 
 interface Stats {
   leetcode: { total: number; solved: number; easy: number; medium: number; hard: number };
@@ -13,8 +13,23 @@ interface Stats {
   knowledge: { total: number };
 }
 
+interface DailyQuestion {
+  id: number;
+  title: string;
+  title_cn: string;
+  difficulty: string;
+  category: string;
+  tags: string;
+  description: string;
+  leetcode_url: string;
+  solution_hint: string;
+  heat_rating: number;
+}
+
 export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [dailyQ, setDailyQ] = useState<DailyQuestion | null>(null);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
     async function loadStats() {
@@ -41,7 +56,19 @@ export default function HomePage() {
         });
       }
     }
+
+    async function loadDaily() {
+      try {
+        const res = await fetch('/api/daily-question');
+        if (res.ok) {
+          const data = await res.json();
+          setDailyQ(data);
+        }
+      } catch { /* ignore */ }
+    }
+
     loadStats();
+    loadDaily();
   }, []);
 
   const modules = [
@@ -140,6 +167,74 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Daily Question */}
+      {dailyQ && (
+        <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Dice5 className="h-5 w-5 text-primary" />
+                每日一题
+                <span className="text-xs font-normal text-muted-foreground">
+                  {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}
+                </span>
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge variant={dailyQ.difficulty === 'Hard' ? 'destructive' : 'default'}>
+                  {dailyQ.difficulty === 'Hard' ? '困难' : '中等'}
+                </Badge>
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-3.5 w-3.5 ${i < dailyQ.heat_rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <h3 className="text-xl font-semibold mb-1">
+              {dailyQ.title_cn}
+              <span className="text-sm font-normal text-muted-foreground ml-2">{dailyQ.title}</span>
+            </h3>
+            <div className="flex items-center gap-2 mb-3">
+              <Badge variant="outline">{dailyQ.category}</Badge>
+              {dailyQ.tags?.split(',').map((tag: string) => (
+                <Badge key={tag} variant="secondary" className="text-xs">{tag.trim()}</Badge>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">{dailyQ.description}</p>
+            <div className="flex items-center gap-3">
+              <a
+                href={dailyQ.leetcode_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                开始做题
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <button
+                onClick={() => setShowHint(!showHint)}
+                className="inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+              >
+                <Lightbulb className="h-3.5 w-3.5" />
+                {showHint ? '隐藏提示' : '查看提示'}
+              </button>
+            </div>
+            {showHint && (
+              <div className="mt-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <span className="font-medium">思路提示：</span>{dailyQ.solution_hint}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Module Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4">
