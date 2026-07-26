@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  BookOpen, Code2, Coffee, Brain, Library, Settings, Home, Search,
+  BookOpen, Code2, Coffee, Brain, Library, Settings, Home, Search, Upload,
 } from 'lucide-react';
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/java', label: 'Java 面试题', icon: Coffee },
   { href: '/ai-agent', label: 'AI Agent 面试', icon: Brain },
   { href: '/knowledge', label: '知识库', icon: Library },
+  { href: '/batch-upload', label: '批量上传', icon: Upload },
   { href: '/admin', label: '运维管理', icon: Settings },
 ];
 
