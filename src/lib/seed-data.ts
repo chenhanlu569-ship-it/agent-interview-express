@@ -59,6 +59,16 @@ export function seedJavaQuestions() {
     { category: '微服务', question: '如何设计一个高并发系统？', answer: '缓存(多级缓存)、异步(MQ)、限流(令牌桶)、分库分表、读写分离、CDN、连接池、JVM调优、水平扩展、降级兜底。核心：缓存+异步+水平扩展。', tags: '高并发,架构', importance: 4 },
     { category: '设计模式', question: '策略模式和模板方法区别？', answer: '策略模式：封装算法族，运行时选择(组合)。模板方法：定义算法骨架，子类重写步骤(继承)。策略更灵活可运行时切换，模板适合固定流程。', tags: '策略,模板方法', importance: 1 },
     { category: '消息队列', question: 'Kafka为什么吞吐量高？', answer: '1.顺序写磁盘 2.零拷贝(sendfile) 3.批量发送+压缩 4.分区并行 5.PageCache利用OS缓存 6.消费者组并行消费。', tags: 'Kafka,高性能', importance: 4 },
+    // 面试必问9题（面经30家公司总结）
+    { category: 'Java基础', question: 'HashMap底层原理？', answer: 'JDK1.7:数组+链表头插法;JDK1.8:数组+链表+红黑树尾插法。put:计算hash定位桶→插入→超过阈值扩容2倍。负载因子0.75,链表>8转红黑树,<6退回链表。', tags: 'HashMap,底层,必问', importance: 5 },
+    { category: '并发编程', question: 'ConcurrentHashMap如何保证线程安全？', answer: 'JDK1.7:Segment分段锁(ReentrantLock);JDK1.8:CAS+synchronized锁桶节点,锁粒度更细。size()用baseCount+CounterCell累加(CAS)。', tags: 'ConcurrentHashMap,线程安全,必问', importance: 5 },
+    { category: '数据库', question: 'Redis缓存穿透/击穿/雪崩及解决方案？', answer: '穿透:查询不存在数据→布隆过滤器/空值缓存。击穿:热点key过期→互斥锁/永不过期+异步刷新。雪崩:大量key同时过期→过期时间加随机值/多级缓存/熔断降级。', tags: 'Redis,缓存,必问', importance: 5 },
+    { category: '数据库', question: 'MySQL索引失效的场景有哪些？', answer: '1.对索引列使用函数或计算 2.隐式类型转换 3.联合索引不满足最左前缀 4.LIKE以%开头 5.OR条件含非索引列 6.NOT IN/NOT EXISTS 7.数据量小优化器选择全扫', tags: 'MySQL,索引,必问', importance: 5 },
+    { category: 'Spring', question: 'Spring的IoC和AOP原理？', answer: 'IoC:BeanDefinition解析→BeanFactory注册→依赖注入(构造器/setter/字段),三级缓存解决循环引用。AOP:动态代理(JDK接口/CGLIB子类),代理对象在后置处理器生成,拦截方法调用执行通知链。', tags: 'Spring,IoC,AOP,必问', importance: 5 },
+    { category: '并发编程', question: '线程池7个核心参数？', answer: '1.corePoolSize核心线程数 2.maximumPoolSize最大线程数 3.keepAliveTime空闲存活时间 4.unit时间单位 5.workQueue任务队列 6.threadFactory线程工厂 7.handler拒绝策略。提交顺序:核心线程→队列→非核心线程→拒绝策略。', tags: '线程池,必问,并发', importance: 5 },
+    { category: '数据库', question: 'MySQL事务四种隔离级别？', answer: 'READ UNCOMMITTED:脏读+不可重复读+幻读。READ COMMITTED:不可重复读+幻读。REPEATABLE READ:幻读(MySQL默认,MVCC+间隙锁可防)。SERIALIZABLE:完全隔离串行执行。', tags: 'MySQL,事务,隔离级别,必问', importance: 5 },
+    { category: 'JVM', question: 'JVM垃圾回收机制？', answer: '判断存活:引用计数/可达性分析(GC Roots)。算法:标记-清除(碎片)/复制(空间)/标记-整理。分代:新生代(Eden+S0+S1,Minor GC,复制算法)/老年代(Major GC,标记-整理)。收集器:Serial/Parallel/CMS/G1/ZGC。', tags: 'JVM,GC,必问', importance: 5 },
+    { category: '微服务', question: '分布式锁实现方案？', answer: '1.Redis:SETNX+EX过期(Redisson看门狗续期) 2.ZooKeeper:临时顺序节点+Watch 3.MySQL:唯一索引/SELECT FOR UPDATE 4.etcd:Lease+Revision。Redis性能最高但非公平;ZK可靠但慢;MySQL简单但并发差。推荐Redisson。', tags: '分布式锁,Redis,ZooKeeper,必问', importance: 5 },
   ];
 
   const seedAll = db.transaction(() => { for (const q of qs) insert.run(q); });
