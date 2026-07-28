@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  BookOpen, Code2, Coffee, Brain, Library, Settings, Home, Search, Upload,
+  BookOpen, Code2, Coffee, Brain, Library, Settings, Home, Search, Upload, MessageSquare,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: '首页', icon: Home },
+  { href: '/knowledge-qa', label: '知识问答', icon: MessageSquare },
   { href: '/leetcode', label: 'LeetCode 热题', icon: Code2 },
   { href: '/java', label: 'Java 面试题', icon: Coffee },
   { href: '/ai-agent', label: 'AI Agent 面试', icon: Brain },
